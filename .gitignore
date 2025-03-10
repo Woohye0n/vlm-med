@@ -173,5 +173,9 @@ cython_debug/
 # For AnomalyGPT
 *.png
 *.pt
-pandagpt4_visual_instruction_data.json
+*.pth
+*.model
+*.bin
 *.zip
+*.jpg
+pandagpt4_visual_instruction_data.json

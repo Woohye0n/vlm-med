@@ -1,0 +1,16 @@
+brain_mri right: 2838 wrong: 877
+brain_mri i_AUROC: 75.61
+brain_mri p_AUROC: 96.0
+
+liver_ct right: 649 wrong: 844
+liver_ct i_AUROC: 71.97
+liver_ct p_AUROC: 95.93
+
+retinal_oct right: 1391 wrong: 414
+retinal_oct i_AUROC: 85.83
+retinal_oct p_AUROC: 85.51
+
+i_AUROC: tensor(77.8033, dtype=torch.float64)
+p_AUROC: tensor(92.4800, dtype=torch.float64)
+precision: tensor(65.6421)
+accuracy: 0.6955653785826322

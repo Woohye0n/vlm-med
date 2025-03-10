@@ -1,0 +1,24 @@
+/home/aidas_2/miniconda3/envs/ano/lib/python3.10/site-packages/torchvision/transforms/_functional_video.py:6: UserWarning: The 'torchvision.transforms._functional_video' module is deprecated since 0.12 and will be removed in the future. Please use the 'torchvision.transforms.functional' module instead.
+  warnings.warn(
+/home/aidas_2/miniconda3/envs/ano/lib/python3.10/site-packages/torchvision/transforms/_transforms_video.py:22: UserWarning: The 'torchvision.transforms._transforms_video' module is deprecated since 0.12 and will be removed in the future. Please use the 'torchvision.transforms' module instead.
+  warnings.warn(
+Initializing visual encoder from ../pretrained_ckpt/imagebind_ckpt/imagebind_huge.pth ...
+Visual encoder initialized.
+Initializing language decoder from ../pretrained_ckpt/vicuna_ckpt/7b_v0 ...
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:04<00:04,  4.88s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:06<00:00,  3.05s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:06<00:00,  3.32s/it]
+trainable params: 33554432 || all params: 6771978240 || trainable%: 0.49548936530546206
+Language decoder initialized.
+[!] init the 7b model over ...
+brain_mri right: 3170 wrong: 545
+brain_mri i_AUROC: 73.79
+brain_mri p_AUROC: 94.47
+liver_ct right: 662 wrong: 831
+liver_ct i_AUROC: 60.76
+liver_ct p_AUROC: 96.78
+retinal_oct right: 1175 wrong: 630
+retinal_oct i_AUROC: 79.26
+retinal_oct p_AUROC: 83.77
+i_AUROC: tensor(71.2700, dtype=torch.float64)
+p_AUROC: tensor(91.6733, dtype=torch.float64)
+precision: tensor(64.9223)
+accuracy: 0.7139597889633538
