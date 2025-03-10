@@ -174,3 +174,4 @@ cython_debug/
 *.png
 *.pt
 pandagpt4_visual_instruction_data.json
+*.zip
