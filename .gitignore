@@ -169,3 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# For AnomalyGPT
+*.png
+*.pt
+pandagpt4_visual_instruction_data.json
