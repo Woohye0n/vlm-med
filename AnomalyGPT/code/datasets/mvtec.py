@@ -97,7 +97,7 @@ class MVtecDataset(Dataset):
                     'num_patches': 2, #if single_patch else NUM_PATCHES.get(class_name),
                     'min_object_pct': 0,
                     'min_overlap_pct': 0.25,
-                    'gamma_params':(2, 0.05, 0.03), 'resize':True, 
+                    'gamma_params':(2, 0.03, 0.05), 'resize':True, 
                     'shift':True, 
                     'same':False, 
                     'mode':cv2.NORMAL_CLONE,

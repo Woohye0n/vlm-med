@@ -14,7 +14,7 @@ from torch.nn.utils import rnn
 from transformers import LlamaTokenizer
 from peft import *
 
-CLASS_NAMES = ['brain_mri', 'liver_ct', 'retinal_oct', 'object']
+CLASS_NAMES = ['brain_mri', 'chest_xray', 'liver_ct', 'pathology', 'retinal_oct', 'retinal_resc']
 # CLASS_NAMES = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather', 'metal nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor', 'wood', 'zipper', 'object',
 #                'candle', 'cashew', 'chewinggum', 'fryum', 'macaroni', 'pcb', 'pipe fryum']
 
@@ -32,7 +32,7 @@ prompt_templates = ['a photo of a {}.', 'a photo of the {}.']
 #                         'a photo of the {} for visual insprction.', 'a photo of a {} for visual insprction.',
 #                         'a photo of the {} for anomaly detection.', 'a photo of a {} for anomaly detection.'
 #                         ]
-objs = ['brain_mri', 'liver_ct', 'retinal_oct', 'object']
+objs = ['brain_mri', 'chest_xray', 'liver_ct', 'pathology', 'retinal_oct', 'retinal_resc', 'object']
 # objs = ['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut', 'leather', 'metal nut', 'pill', 'screw', 'tile', 'toothbrush', 'transistor', 'wood', 'zipper', 'object',
 #         'candle', 'cashew', 'chewinggum', 'fryum', 'macaroni', 'pcb', 'pipe fryum', 'macaroni1', 'macaroni2','pcb1', 'pcb2', 'pcb3', 'pcb4', 'capsules']
 
@@ -600,10 +600,16 @@ class OpenLLAMAPEFTModel(nn.Module):
 
             if "brain" in prompt:
                 c_name = "brain_mri"
+            elif "chest" in prompt:
+                c_name = "chest_xray"
             elif "liver" in prompt:
                 c_name = "liver_ct"
-            elif "retinal" in prompt:
+            elif "pathology" in prompt:
+                c_name = "pathology"
+            elif "oct2017" in prompt:
                 c_name = "retinal_oct"
+            elif "resc" in prompt:
+                c_name = "retinal_resc"
                 
             if not web_demo:
                 image_embeds, _, patch_tokens = self.encode_image(inputs['image_paths'])

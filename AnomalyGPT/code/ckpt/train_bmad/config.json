@@ -1,5 +1,5 @@
 {
-  "_name_or_path": "/root/.cache/huggingface/hub/models--luodian--llama-7b-hf/snapshots/27f2d847cf30ab1cdbd4a2ad82fc38309cd57257/",
+  "_name_or_path": "../pretrained_ckpt/vicuna_ckpt/7b_v0/",
   "architectures": [
     "LlamaForCausalLM"
   ],

@@ -3,6 +3,12 @@ from .samplers import DistributedBatchSampler
 from .sft_dataset import *
 from .mvtec import *
 from .bmad import *
+from .brain import *
+from .liver import *
+from .chest import *
+from .resc import *
+from .oct import *
+from .pathology import *
 from .visa import VisaDataset
 from . import all_supervised_with_cn
 
@@ -155,6 +161,180 @@ def load_supervised_dataset_with_cn(args):
         data, 
         batch_sampler=batch_sampler, 
         num_workers=1,
+        collate_fn=data.collate, 
+        pin_memory=False
+    )
+    return data, iter_, sampler
+
+def load_brain_dataset(args):
+    '''
+    tokenizer = get_tokenizer(args['model_path'])
+    dataset_name = args['models'][args['model']]['stage1_train_dataset'] # SupervisedDataset, str
+    data_path = args["data_path"]
+    data = globals()[dataset_name](data_path, tokenizer, args['max_length']) #SupervisedDataset
+    '''
+    data = BrainDataset('../data/bmad')
+
+    sampler = torch.utils.data.RandomSampler(data)
+    world_size = torch.distributed.get_world_size()
+    rank = torch.distributed.get_rank()
+    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    batch_sampler = DistributedBatchSampler(
+        sampler, 
+        batch_size,
+        True,
+        rank,
+        world_size
+    )
+    iter_ = DataLoader(
+        data, 
+        batch_sampler=batch_sampler, 
+        num_workers=8,
+        collate_fn=data.collate, 
+        pin_memory=False
+    )
+    return data, iter_, sampler
+
+def load_liver_dataset(args):
+    '''
+    tokenizer = get_tokenizer(args['model_path'])
+    dataset_name = args['models'][args['model']]['stage1_train_dataset'] # SupervisedDataset, str
+    data_path = args["data_path"]
+    data = globals()[dataset_name](data_path, tokenizer, args['max_length']) #SupervisedDataset
+    '''
+    data = LiverDataset('../data/bmad')
+
+    sampler = torch.utils.data.RandomSampler(data)
+    world_size = torch.distributed.get_world_size()
+    rank = torch.distributed.get_rank()
+    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    batch_sampler = DistributedBatchSampler(
+        sampler, 
+        batch_size,
+        True,
+        rank,
+        world_size
+    )
+    iter_ = DataLoader(
+        data, 
+        batch_sampler=batch_sampler, 
+        num_workers=8,
+        collate_fn=data.collate, 
+        pin_memory=False
+    )
+    return data, iter_, sampler
+
+def load_chest_dataset(args):
+    '''
+    tokenizer = get_tokenizer(args['model_path'])
+    dataset_name = args['models'][args['model']]['stage1_train_dataset'] # SupervisedDataset, str
+    data_path = args["data_path"]
+    data = globals()[dataset_name](data_path, tokenizer, args['max_length']) #SupervisedDataset
+    '''
+    data = ChestDataset('../data/bmad')
+
+    sampler = torch.utils.data.RandomSampler(data)
+    world_size = torch.distributed.get_world_size()
+    rank = torch.distributed.get_rank()
+    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    batch_sampler = DistributedBatchSampler(
+        sampler, 
+        batch_size,
+        True,
+        rank,
+        world_size
+    )
+    iter_ = DataLoader(
+        data, 
+        batch_sampler=batch_sampler, 
+        num_workers=8,
+        collate_fn=data.collate, 
+        pin_memory=False
+    )
+    return data, iter_, sampler
+
+def load_resc_dataset(args):
+    '''
+    tokenizer = get_tokenizer(args['model_path'])
+    dataset_name = args['models'][args['model']]['stage1_train_dataset'] # SupervisedDataset, str
+    data_path = args["data_path"]
+    data = globals()[dataset_name](data_path, tokenizer, args['max_length']) #SupervisedDataset
+    '''
+    data = RescDataset('../data/bmad')
+
+    sampler = torch.utils.data.RandomSampler(data)
+    world_size = torch.distributed.get_world_size()
+    rank = torch.distributed.get_rank()
+    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    batch_sampler = DistributedBatchSampler(
+        sampler, 
+        batch_size,
+        True,
+        rank,
+        world_size
+    )
+    iter_ = DataLoader(
+        data, 
+        batch_sampler=batch_sampler, 
+        num_workers=8,
+        collate_fn=data.collate, 
+        pin_memory=False
+    )
+    return data, iter_, sampler
+
+def load_oct_dataset(args):
+    '''
+    tokenizer = get_tokenizer(args['model_path'])
+    dataset_name = args['models'][args['model']]['stage1_train_dataset'] # SupervisedDataset, str
+    data_path = args["data_path"]
+    data = globals()[dataset_name](data_path, tokenizer, args['max_length']) #SupervisedDataset
+    '''
+    data = OctDataset('../data/bmad')
+
+    sampler = torch.utils.data.RandomSampler(data)
+    world_size = torch.distributed.get_world_size()
+    rank = torch.distributed.get_rank()
+    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    batch_sampler = DistributedBatchSampler(
+        sampler, 
+        batch_size,
+        True,
+        rank,
+        world_size
+    )
+    iter_ = DataLoader(
+        data, 
+        batch_sampler=batch_sampler, 
+        num_workers=8,
+        collate_fn=data.collate, 
+        pin_memory=False
+    )
+    return data, iter_, sampler
+
+def load_pathology_dataset(args):
+    '''
+    tokenizer = get_tokenizer(args['model_path'])
+    dataset_name = args['models'][args['model']]['stage1_train_dataset'] # SupervisedDataset, str
+    data_path = args["data_path"]
+    data = globals()[dataset_name](data_path, tokenizer, args['max_length']) #SupervisedDataset
+    '''
+    data = PathologyDataset('../data/bmad')
+
+    sampler = torch.utils.data.RandomSampler(data)
+    world_size = torch.distributed.get_world_size()
+    rank = torch.distributed.get_rank()
+    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    batch_sampler = DistributedBatchSampler(
+        sampler, 
+        batch_size,
+        True,
+        rank,
+        world_size
+    )
+    iter_ = DataLoader(
+        data, 
+        batch_sampler=batch_sampler, 
+        num_workers=8,
         collate_fn=data.collate, 
         pin_memory=False
     )

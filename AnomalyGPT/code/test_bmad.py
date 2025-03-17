@@ -36,8 +36,11 @@ describles = {}
 # describles['zipper'] = "This is a photo of a zipper for anomaly detection, which should be without any damage, flaw, defect, scratch, hole or broken part."
 
 describles['brain_mri'] = "This is a photo of a brain MRI for anomaly detection, which should be without any damage, flaw, defect, or scratch."
+describles['chest_xray'] = "This is a photo of a chest X-Ray for anomaly detection, which should be without any damage, flaw, defect, or scratch."
 describles['liver_ct'] = "This is a photo of liver CT for anomaly detection, which should be without any damage, flaw, defect, or scratch."
+describles['pathology'] = "This is a photo of pathology for anomaly detection, which should be without any damage, flaw, defect, or scratch."
 describles['retinal_oct'] = "This is a photo of retinal OCT for anomaly detection, which should be without any damage, flaw, defect, or scratch."
+describles['retinal_resc'] = "This is a photo of retinal OCT for anomaly detection, which should be without any damage, flaw, defect, or scratch."
 
 FEW_SHOT = command_args.few_shot 
 
@@ -56,6 +59,10 @@ args = {
     'lora_alpha': 32,
     'lora_dropout': 0.1,
 }
+
+print("************************")
+print(command_args)
+print("************************")
 
 model = OpenLLAMAPEFTModel(**args)
 delta_ckpt = torch.load(args['delta_ckpt_path'], map_location=torch.device('cpu'))
@@ -114,7 +121,7 @@ mask_transform = transforms.Compose([
                                 transforms.ToTensor()
                             ])
 
-CLASS_NAMES = ['brain_mri', 'liver_ct', 'retinal_oct']
+CLASS_NAMES = ['brain_mri', 'chest_xray', 'liver_ct', 'pathology', 'retinal_oct', 'retinal_resc']
 
 precision = []
 total_right = 0
@@ -135,7 +142,7 @@ for c_name in CLASS_NAMES:
     for root, dirs, files in os.walk(root_dir):
         for file in files:
             file_path = os.path.join(root, file)
-            if "test" in file_path and 'png' in file and c_name in file_path:
+            if "test" in file_path and ('png' in file or 'jpeg' in file) and c_name in file_path:
                 if FEW_SHOT:
                     resp, anomaly_map = predict(describles[c_name] + ' ' + input, file_path, normal_img_paths, 4, 0.1, 1.0, [], [])
                 else:
@@ -146,8 +153,12 @@ for c_name in CLASS_NAMES:
                     img_mask = Image.fromarray(np.zeros((224, 224)), mode='L')
                 else:
                     mask_path = file_path.replace('test', 'ground_truth')
+                    if os.path.exists(mask_path):
                     # mask_path = mask_path.replace('.png', '_mask.png')
-                    img_mask = Image.open(mask_path).convert('L')
+                        img_mask = Image.open(mask_path).convert('L')
+                    else:
+                        img_mask = Image.open(file_path).convert('L')
+                        img_mask = Image.new("L", img_mask.size, 0)
 
                 img_mask = mask_transform(img_mask)
                 img_mask[img_mask > 0.1], img_mask[img_mask <= 0.1] = 1, 0
@@ -172,27 +183,35 @@ for c_name in CLASS_NAMES:
                 else:
                     wrong += 1
 
-    p_pred = np.array(p_pred)
-    p_label = np.array(p_label)
-
-    i_pred = np.array(i_pred)
-    i_label = np.array(i_label)
 
     total_right += right
     total_wrong += wrong
 
-    p_auroc = round(roc_auc_score(p_label.ravel(), p_pred.ravel()) * 100,2)
-    i_auroc = round(roc_auc_score(i_label.ravel(), i_pred.ravel()) * 100,2)
-    
-    p_auc_list.append(p_auroc)
-    i_auc_list.append(i_auroc)
     precision.append(100 * right / (right + wrong))
 
-    print(c_name, 'right:',right,'wrong:',wrong)
-    print(c_name, "i_AUROC:", i_auroc)
-    print(c_name, "p_AUROC:", p_auroc)
+    print("########################################")
+    print(c_name)
+    print(c_name, 'right:', right, 'wrong:', wrong)
+    print(c_name, 'acc:', right / (right + wrong))
+    if c_name in ['brain_mri', 'liver_ct', 'retinal_resc']:
+        p_pred = np.array(p_pred)
+        p_label = np.array(p_label)
 
-print("i_AUROC:", torch.tensor(i_auc_list).mean())
-print("p_AUROC:", torch.tensor(p_auc_list).mean())
-print("precision:", torch.tensor(precision).mean())
-print("accuracy:", total_right / (total_right + total_wrong))
+        i_pred = np.array(i_pred)
+        i_label = np.array(i_label)
+
+        p_auroc = round(roc_auc_score(p_label.ravel(), p_pred.ravel()) * 100,2)
+        i_auroc = round(roc_auc_score(i_label.ravel(), i_pred.ravel()) * 100,2)
+    
+        p_auc_list.append(p_auroc)
+        i_auc_list.append(i_auroc)
+        print(c_name, "i_AUROC:", i_auroc)
+        print(c_name, "p_AUROC:", p_auroc)
+    print("########################################")
+
+print("########################################")
+print("Total i_AUROC:", torch.tensor(i_auc_list).mean())
+print("Total p_AUROC:", torch.tensor(p_auc_list).mean())
+print("Total precision:", torch.tensor(precision).mean())
+print("Total accuracy:", total_right / (total_right + total_wrong))
+print("########################################")

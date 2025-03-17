@@ -11,7 +11,7 @@ from .self_sup_tasks import patch_ex
 
 
 
-CLASS_NAMES = ['brain_mri', 'chest_xray', 'liver_ct', 'pathology', 'retinal_oct', 'retinal_resc']
+CLASS_NAMES = ['liver_ct']
 
 
 describles = {}
@@ -28,15 +28,10 @@ describles = {}
 # describles['pcb4'] = "This is a photo of pcb for anomaly detection, which should be without any damage, flaw, defect, scratch, hole or broken part."
 # describles['pipe_fryum'] = "This is a photo of a pipe fryum for anomaly detection, which should be without any damage, flaw, defect, scratch, hole or broken part."
 
-describles['brain_mri'] = "This is a photo of a brain MRI for anomaly detection, which should be without any damage, flaw, defect, or scratch."
-describles['chest_xray'] = "This is a photo of a chest X-Ray for anomaly detection, which should be without any damage, flaw, defect, or scratch."
 describles['liver_ct'] = "This is a photo of liver CT for anomaly detection, which should be without any damage, flaw, defect, or scratch."
-describles['pathology'] = "This is a photo of pathology for anomaly detection, which should be without any damage, flaw, defect, or scratch."
-describles['retinal_oct'] = "This is a photo of retinal OCT from oct2017 dataset for anomaly detection, which should be without any damage, flaw, defect, or scratch."
-describles['retinal_resc'] = "This is a photo of retinal OCT from resc dataset for anomaly detection, which should be without any damage, flaw, defect, or scratch."
 
 
-class BmadDataset(Dataset):
+class LiverDataset(Dataset):
     def __init__(self, root_dir: str):
         self.root_dir = root_dir
         self.transform = transforms.Resize(
@@ -58,7 +53,7 @@ class BmadDataset(Dataset):
         for root, dirs, files in os.walk(root_dir):
             for file in files:
                 file_path = os.path.join(root, file)
-                if "train" in file_path and "good" in file_path and ('png' in file or 'jpeg' in file):
+                if "train" in file_path and "good" in file_path and 'png' in file and 'liver_ct' in file_path:
                     self.paths.append(file_path)
                     self.x.append(self.transform(Image.open(file_path).convert('RGB')))
 
@@ -83,9 +78,7 @@ class BmadDataset(Dataset):
                     'mode':cv2.NORMAL_CLONE,
                     'label_mode':'logistic-intensity',
                     'skip_background': (20, 20),
-                    'resize_bounds': (.5, 2),
-                    # 'min_object_pct': 0.7,
-                    # 'min_overlap_pct': 0.7
+                    'resize_bounds': (.5, 2)
                     }
 
         x = np.asarray(x)
