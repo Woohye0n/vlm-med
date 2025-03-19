@@ -1,0 +1,17 @@
+en only
+###########################################
+default with formulate
+0.57
+
+bounding box coordinate
+0.52
+
+bounding box coordinate and category
+0.59
+
+green bounding box 
+0.63
+
+green bounding box and mention
+0.56
+###########################################
