@@ -193,19 +193,17 @@ for c_name in CLASS_NAMES:
     print(c_name)
     print(c_name, 'right:', right, 'wrong:', wrong)
     print(c_name, 'acc:', right / (right + wrong))
+    i_pred = np.array(i_pred)
+    i_label = np.array(i_label)
+    i_auroc = round(roc_auc_score(i_label.ravel(), i_pred.ravel()) * 100,2)
+    i_auc_list.append(i_auroc)
+    print(c_name, "i_AUROC:", i_auroc)
+
     if c_name in ['brain_mri', 'liver_ct', 'retinal_resc']:
         p_pred = np.array(p_pred)
         p_label = np.array(p_label)
-
-        i_pred = np.array(i_pred)
-        i_label = np.array(i_label)
-
         p_auroc = round(roc_auc_score(p_label.ravel(), p_pred.ravel()) * 100,2)
-        i_auroc = round(roc_auc_score(i_label.ravel(), i_pred.ravel()) * 100,2)
-    
         p_auc_list.append(p_auroc)
-        i_auc_list.append(i_auroc)
-        print(c_name, "i_AUROC:", i_auroc)
         print(c_name, "p_AUROC:", p_auroc)
     print("########################################")
 

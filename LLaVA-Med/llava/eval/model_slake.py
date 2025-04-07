@@ -97,9 +97,6 @@ def eval_model(args):
 
         # print("###########################################")
         # print(prompt)
-        # print(detection)
-        # print(args.bbox_detail)
-        # print(args.bbox_draw)
         # print("###########################################")
         # exit()
 
