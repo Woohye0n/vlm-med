@@ -235,7 +235,7 @@ class BaseVisualTokenizer(PreTrainedModel):
         if self.config.hidden_stride > 1:
             n, l, d = features.shape  # this `d` maybe different from the above `d
             sqrt_l = int(l ** 0.5)
-            assert sqrt_l ** 2 == l, "The token sequence length should be a perfect square."
+            assert sqrt_l ** 2 == l, f"The token sequence length should be a perfect square."
             features = features.reshape(n, sqrt_l, sqrt_l, d)
             pl = (self.config.hidden_stride - (sqrt_l % self.config.hidden_stride)) % self.config.hidden_stride
             features = pad(features, (0, 0, 0, pl, 0, pl), "constant", 0)

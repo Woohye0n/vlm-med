@@ -8,6 +8,8 @@ from torch.nn import functional as F
 from transformers.modeling_outputs import BaseModelOutputWithNoAttention
 from transformers.modeling_utils import PreTrainedModel
 from operator import mul
+import math
+from functools import reduce
 
 __all__ = ["AIMv2Model"]
 
@@ -157,20 +159,20 @@ class AIMv2PromptTransformer(AIMv2Transformer):
         super().__init__(config)
 
         self.num_tokens = 5
-        self.prompt_dropout = Dropout(0.0)
+        # self.prompt_dropout = Dropout(0.0)
 
         # initiate prompt:
         # val = math.sqrt(6. / float(3 * reduce(mul, self.patch_embed.patch_size, 1) + self.embed_dim))  # noqa
-        val = math.sqrt(6. / float(3 * reduce(mul, 14, 1) + 1536))  # noqa
+        val = math.sqrt(6. / float(3 * reduce(mul, (14, 14), 1) + 1536))  # noqa
 
         self.prompt_embeddings = nn.Parameter(torch.zeros(
-            1, num_tokens, 1536))
+            1, self.num_tokens, 1536))
         # xavier_uniform initialization
         nn.init.uniform_(self.prompt_embeddings.data, -val, val)
 
         self.deep_prompt_embeddings = nn.Parameter(torch.zeros(
-            len(self.blocks) - 1,
-            num_tokens, 1536
+            len(self.blocks),
+            self.num_tokens, 1536
         ))
         # xavier_uniform initialization
         nn.init.uniform_(
@@ -183,13 +185,19 @@ class AIMv2PromptTransformer(AIMv2Transformer):
         output_hidden_states: bool = False,
     ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, ...]]]:
         hidden_states = () if output_hidden_states else None
-        for block in self.blocks:
+        print("initial Token", tokens.shape)
+        for n, block in enumerate(self.blocks):
+            B, N, C = tokens.shape
+            deep_prompt = torch.cat([self.deep_prompt_embeddings[n].unsqueeze(0)] * B, dim=0)
+            tokens = torch.cat((deep_prompt, tokens), dim=1)
             if self.gradient_checkpointing and self.training:
                 tokens = self._gradient_checkpointing_func(block.__call__, tokens, mask)
             else:
                 tokens = block(tokens, mask)
+            tokens = tokens[:, -N:, :]
             if output_hidden_states:
                 hidden_states += (tokens,)
+        print("Final Token", tokens.shape)
         tokens = self.post_trunk_norm(tokens)
         return tokens, hidden_states
 
@@ -207,7 +215,8 @@ class AIMv2Model(AIMv2PretrainedModel):
     def __init__(self, config: AIMv2Config):
         super().__init__(config)
         self.preprocessor = AIMv2ViTPreprocessor(config)
-        self.trunk = AIMv2Transformer(config)
+        # self.trunk = AIMv2Transformer(config)
+        self.trunk = AIMv2PromptTransformer(config)
 
     def forward(
         self,
