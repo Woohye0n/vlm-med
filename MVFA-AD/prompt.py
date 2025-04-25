@@ -6,5 +6,5 @@ TEMPLATES = ['a cropped photo of the {}.', 'a cropped photo of a {}.', 'a close-
                     'a photo of the {} for anomaly detection.', 'a photo of a {} for anomaly detection.']
 
 
-REAL_NAME = {'Brain': 'Brain', 'Liver':'Liver', 'Retina_RESC':'retinal OCT', 'Chest':'Chest X-ray film', 'Retina_OCT2017':'retinal OCT', 'Histopathology':'histopathological image'}
+REAL_NAME = {'Brain': 'Brain', 'Liver':'Liver', 'Retina_RESC':'retinal OCT', 'Chest':'Chest X-ray film', 'Retina_OCT2017':'retinal OCT', 'Histopathology':'histopathological image', 'Test':'Chest X-ray film'}
 

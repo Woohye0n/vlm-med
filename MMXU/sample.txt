@@ -1,0 +1,11 @@
+"id": 9
+"content_type": "worsen
+"question": "What is the change in the right lung when comparing the previous and current images?"
+"options": 
+    "A": "The right lung has shown no change.", 
+    "B": "The right lung condition has improved.", 
+    "C": "The right lung has worsened.", 
+    "D": "The right lung had a new pathology appear."
+"answer": "C"
+"cur_image_path": "files/p14/p14957820/s53329147/9323f717-6994372c-96cb7213-af6fb783-f2df94c6.jpg"
+"prior_image_path": "files/p14/p14957820/s57267519/fd05031a-bdc6addb-2e2f4875-5064ea39-af0e79b7.jpg"

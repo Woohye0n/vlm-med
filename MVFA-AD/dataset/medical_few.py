@@ -7,8 +7,8 @@ import random
 import pandas as pd
 import numpy as np
 
-CLASS_NAMES = ['Brain', 'Liver', 'Retina_RESC', 'Retina_OCT2017', 'Chest', 'Histopathology']
-CLASS_INDEX = {'Brain':3, 'Liver':2, 'Retina_RESC':1, 'Retina_OCT2017':-1, 'Chest':-2, 'Histopathology':-3}
+CLASS_NAMES = ['Brain', 'Liver', 'Retina_RESC', 'Retina_OCT2017', 'Chest', 'Histopathology', 'Test']
+CLASS_INDEX = {'Brain':3, 'Liver':2, 'Retina_RESC':1, 'Retina_OCT2017':-1, 'Chest':-2, 'Histopathology':-3, 'Test':-4}
 
 
 class MedDataset(Dataset):
@@ -113,7 +113,7 @@ class MedDataset(Dataset):
                         break
 
         for f in random_choice:
-            if f.endswith('.png') or f.endswith('.jpeg'):
+            if f.endswith('.png') or f.endswith('.jpeg') or f.endswith('.jpg'):
                 x.append(os.path.join(img_dir, f))
 
         fewshot_img = []
@@ -148,7 +148,7 @@ class MedDataset(Dataset):
                         break
 
         for f in random_choice:
-            if f.endswith('.png') or f.endswith('.jpeg'):
+            if f.endswith('.png') or f.endswith('.jpeg') or f.endswith('.jpg'):
                 x.append(os.path.join(img_dir, f))
                 y.append(os.path.join(mask_dir, f))
 

@@ -184,7 +184,7 @@ class CLIP(nn.Module):
 
     def encode_image(self, image, out_layers, normalize: bool = False):
         # print(image.shape)
-        features = self.visual(image, out_layers)
+        features = self.visual(image, out_layers)[-1][0]
         return F.normalize(features, dim=-1) if normalize else features
 
     def encode_text(self, text, normalize: bool = False):

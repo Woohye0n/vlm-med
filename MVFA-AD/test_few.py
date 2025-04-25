@@ -19,13 +19,18 @@ from utils import augment, cos_sim, encode_text_with_prompt_ensemble
 from prompt import REAL_NAME
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import umap
+
 import warnings
 warnings.filterwarnings("ignore")
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
 
-CLASS_INDEX = {'Brain':3, 'Liver':2, 'Retina_RESC':1, 'Retina_OCT2017':-1, 'Chest':-2, 'Histopathology':-3}
+# CLASS_INDEX = {'Brain':3, 'Liver':2, 'Retina_RESC':1, 'Retina_OCT2017':-1, 'Chest':-2, 'Histopathology':-3, "Test" :-4}
+CLASS_INDEX = {'Brain':-1, 'Liver':-1, 'Retina_RESC':-1, 'Retina_OCT2017':-1, 'Chest':-2, 'Histopathology':-3, "Test" :-4}
 
 def setup_seed(seed):
     torch.manual_seed(seed)
@@ -41,7 +46,7 @@ def main():
     parser = argparse.ArgumentParser(description='Testing')
     parser.add_argument('--model_name', type=str, default='ViT-L-14-336', help="ViT-B-16-plus-240, ViT-L-14-336")
     parser.add_argument('--pretrain', type=str, default='openai', help="laion400m, openai")
-    parser.add_argument('--obj', type=str, default='Liver')
+    parser.add_argument('--obj', type=str, default='Retina_OCT2017')
     parser.add_argument('--data_path', type=str, default='./data/')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--save_model', type=int, default=1)
@@ -140,12 +145,39 @@ def test(args, model, test_loader, text_features, seg_mem_features, det_mem_feat
     seg_score_map_zero = []
     seg_score_map_few= []
 
+    clips = []
+    clips_normal = []
+    clips_anomaly = []
+
+    det = []
+    det_normal = []
+    det_anomaly = []
+
     for (image, y, mask) in tqdm(test_loader):
         image = image.to(device)
         mask[mask > 0.5], mask[mask <= 0.5] = 1, 0
 
         with torch.no_grad(), torch.cuda.amp.autocast():
             _, seg_patch_tokens, det_patch_tokens = model(image)
+
+            clip_feature = model.clipmodel.encode_image(image, out_layers=[6, 12, 18, 24], normalize=True)
+            clip_feature = clip_feature.squeeze(0)[1:, :].mean(dim=0).cpu().numpy()
+            
+            if y == 0:
+                clips_normal.append(clip_feature)
+            elif y == 1:
+                clips_anomaly.append(clip_feature)
+
+            # temp_tensor = torch.cat(det_patch_tokens)
+            # temp_tensor = temp_tensor.mean(dim=0)
+            # # temp_tensor = temp_tensor[1:, :]
+            # temp_tensor = temp_tensor.mean(dim=0)
+            # # temp_tensor = det_patch_tokens[-1]
+            # if y == 0:
+            #     det_normal.append(temp_tensor.cpu().numpy())
+            # elif y == 1:
+            #     det_anomaly.append(temp_tensor.cpu().numpy())
+
             seg_patch_tokens = [p[0, 1:, :] for p in seg_patch_tokens]
             det_patch_tokens = [p[0, 1:, :] for p in det_patch_tokens]
 
@@ -181,14 +213,25 @@ def test(args, model, test_loader, text_features, seg_mem_features, det_mem_feat
 
             else:
                 # few-shot, det head
+                temp_list = []
                 anomaly_maps_few_shot = []
                 for idx, p in enumerate(det_patch_tokens):
                     cos = cos_sim(det_mem_features[idx], p)
                     height = int(np.sqrt(cos.shape[1]))
+                    temp_list.append(torch.min((1 - cos), 0)[0].unsqueeze(0))
                     anomaly_map_few_shot = torch.min((1 - cos), 0)[0].reshape(1, 1, height, height)
                     anomaly_map_few_shot = F.interpolate(torch.tensor(anomaly_map_few_shot),
                                                             size=args.img_size, mode='bilinear', align_corners=True)
                     anomaly_maps_few_shot.append(anomaly_map_few_shot[0].cpu().numpy())
+
+                temp_list = torch.cat(temp_list, dim=0)
+                det_feature = temp_list.mean(dim=0).cpu().numpy()
+
+                if y == 0:
+                    det_normal.append(det_feature)
+                elif y == 1:
+                    det_anomaly.append(det_feature)
+                    
                 anomaly_map_few_shot = np.sum(anomaly_maps_few_shot, axis=0)
                 score_few_det = anomaly_map_few_shot.mean()
                 det_image_scores_few.append(score_few_det)
@@ -205,7 +248,80 @@ def test(args, model, test_loader, text_features, seg_mem_features, det_mem_feat
             
             gt_mask_list.append(mask.squeeze().cpu().detach().numpy())
             gt_list.extend(y.cpu().detach().numpy())
-            
+
+    ##########################################################
+    # (2) [N, D] 형태로 쌓기
+    clips = clips_normal + clips_anomaly
+    labels = [0] * len(clips_normal) + [1] * len(clips_anomaly)
+    data = np.stack(clips)  # shape: [50, 1024]
+
+    # t-SNE
+    # tsne = TSNE(n_components=2, random_state=42, perplexity=10, n_iter=1000)
+    # embedding = tsne.fit_transform(data)
+
+    # umap
+    reducer = umap.UMAP(n_components=2, random_state=42)
+    embedding = reducer.fit_transform(data)  # shape: [50, 2]
+
+    # (4) 시각화
+    plt.figure(figsize=(8, 6))
+    colors = ['blue', 'orange']
+    for class_idx in [1, 0]:
+        indices = np.array(labels) == class_idx
+        plt.scatter(embedding[indices, 0],
+                    embedding[indices, 1],
+                    s=40,
+                    c=colors[class_idx],
+                    label=f'Class {class_idx}',
+                    alpha=0.5)
+
+    plt.title('umap Visualization with 2 Classes')
+    plt.xlabel('Component 1')
+    plt.ylabel('Component 2')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(f'{args.obj}_tSNE_CLIP_2D.png', dpi=300)
+    plt.clf()
+
+
+    # (2) [N, D] 형태로 쌓기
+    det = det_normal + det_anomaly
+    labels = [0] * len(det_normal) + [1] * len(det_anomaly)
+    data = np.stack(det)  # shape: [50, 1024]
+
+    # t-SNE
+    # tsne = TSNE(n_components=2, random_state=42, perplexity=10, n_iter=1000)
+    # embedding = tsne.fit_transform(data)
+
+    # umap
+    reducer = umap.UMAP(n_components=2, random_state=42)
+    embedding = reducer.fit_transform(data)  # shape: [50, 2]
+
+    # 3D 시각화
+    plt.figure(figsize=(8, 6))
+    colors = ['blue', 'orange']
+    for class_idx in [1, 0]:
+        indices = np.array(labels) == class_idx
+        plt.scatter(
+            embedding[indices, 0],
+            embedding[indices, 1],
+            c=colors[class_idx],
+            label=f'Class {class_idx}',
+            s=40,
+            alpha=0.5
+        )
+
+    plt.title('umap Visualization with 2 Classes')
+    plt.xlabel('Component 1')
+    plt.ylabel('Component 2')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(f'{args.obj}_tSNE_det_2D.png', dpi=300)
+    plt.clf()
+    ##########################################################
+    # exit()
 
     gt_list = np.array(gt_list)
     gt_mask_list = np.asarray(gt_mask_list)
