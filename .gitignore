@@ -183,4 +183,5 @@ pandagpt4_visual_instruction_data.json
 *.out
 log.txt
 llava_med_*.json
+bmad_vqa.json
 *.safetensors

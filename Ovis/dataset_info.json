@@ -1,0 +1,7 @@
+{
+    "bmad_vqa": {
+        "meta_file": "/workspace/vlm-med/Ovis/bmad_vqa.json",
+        "image_dir": "/workspace/vlm-med/Ovis/data",
+        "data_format": "conversation"
+    }
+}

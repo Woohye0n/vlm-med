@@ -23,14 +23,14 @@ class ModelArguments:
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
-    dataset_names: Optional[str] = field(default=None)  # a|b|c
-    dataset_info: Optional[str] = field(default='dataset_info_v1_6')
-    ovis_pretrained_path: Optional[str] = field(default=None)
+    dataset_names: Optional[str] = field(default='bmad_vqa')  # a|b|c
+    dataset_info: Optional[str] = field(default='/workspace/vlm-med/Ovis/dataset_info.json')
+    ovis_pretrained_path: Optional[str] = field(default='AIDC-AI/Ovis2-1B')
     visual_tokenizer_pretrained_path: Optional[str] = field(default=None)
     visual_backbone_name_or_path: Optional[str] = field(default=None)
     caption_template: Optional[str] = field(default=None)
-    stage: Optional[int] = field(default=None)
-    train_modules: Optional[str] = field(default=None)
+    stage: Optional[int] = field(default=1)
+    train_modules: Optional[str] = field(default='vpt')
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
     visual_max_tau: float = field(default=5.0)
@@ -42,6 +42,28 @@ class TrainingArguments(transformers.TrainingArguments):
     min_frames: int = field(default=10)
     max_frames: int = field(default=10)
     max_partitions: str = field(default="9|1|1")
+
+# @dataclass
+# class TrainingArguments(transformers.TrainingArguments):
+#     dataset_names: Optional[str] = field(default=None)  # a|b|c
+#     dataset_info: Optional[str] = field(default='dataset_info_v1_6')
+#     ovis_pretrained_path: Optional[str] = field(default=None)
+#     visual_tokenizer_pretrained_path: Optional[str] = field(default=None)
+#     visual_backbone_name_or_path: Optional[str] = field(default=None)
+#     caption_template: Optional[str] = field(default=None)
+#     stage: Optional[int] = field(default=None)
+#     train_modules: Optional[str] = field(default=None)
+#     cache_dir: Optional[str] = field(default=None)
+#     optim: str = field(default="adamw_torch")
+#     visual_max_tau: float = field(default=5.0)
+#     visual_min_tau: float = field(default=0.05)
+#     save_safetensors: bool = field(default=True)
+#     monitor_step: int = field(default=100)
+#     vte_re_init: bool = field(default=False)
+#     text_max_length: int = field(default=1024)
+#     min_frames: int = field(default=10)
+#     max_frames: int = field(default=10)
+#     max_partitions: str = field(default="9|1|1")
 
     def __post_init__(self):
         if self.gradient_checkpointing:

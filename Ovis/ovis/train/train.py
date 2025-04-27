@@ -134,6 +134,8 @@ def train():
             model.get_visual_tokenizer().get_head().requires_grad_(True)
         elif module == 'vte':
             model.get_vte().requires_grad_(True)
+        elif module == 'vpt':
+            model.get_visual_tokenizer().backbone.trunk.deep_prompt_embeddings.requires_grad_(True)
         else:
             raise ValueError(f'Invalid train module name: {module}')
 
@@ -147,8 +149,9 @@ def train():
 
     # construct data module
     datasets = []
-    dataset_info_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                     f'dataset/{training_args.dataset_info}.json')
+    # dataset_info_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+    #                                  f'dataset/{training_args.dataset_info}.json')
+    dataset_info_path = training_args.dataset_info
     with open(dataset_info_path, 'r', encoding='utf-8') as f:
         dataset_info = json.load(f)
     for name in training_args.dataset_names.split('|'):
