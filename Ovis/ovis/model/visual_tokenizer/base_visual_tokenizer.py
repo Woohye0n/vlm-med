@@ -198,6 +198,7 @@ class BaseVisualTokenizer(PreTrainedModel):
             crops.insert(0, image)
         pixel_values = torch.cat([_preprocess(crop, side) for crop in crops], dim=0)
         image_placeholders = self.construct_image_placeholders(grid)
+        pixel_values = pixel_values.to(self.dtype)
         return pixel_values, image_placeholders
 
     def get_backbone_layer(self, index):

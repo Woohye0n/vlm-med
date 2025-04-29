@@ -28,10 +28,13 @@ class Aimv2VisualTokenizer(BaseVisualTokenizer):
 
     def get_monitor_tensors(self):
         return dict(
-            backbone_bottom=self.backbone.trunk.blocks[0].attn.qkv.weight,
-            backbone_top=self.backbone.trunk.blocks[-1].attn.qkv.weight,
-            head=self.head[0].weight
+            vpt=self.backbone.trunk.deep_prompt_embeddings[0]
         )
+        # return dict(
+        #     backbone_bottom=self.backbone.trunk.blocks[0].attn.qkv.weight,
+        #     backbone_top=self.backbone.trunk.blocks[-1].attn.qkv.weight,
+        #     head=self.head[0].weight
+        # )
 
     def get_image_size(self):
         height = self.image_processor.crop_size["height"]

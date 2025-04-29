@@ -158,25 +158,28 @@ class AIMv2PromptTransformer(AIMv2Transformer):
     def __init__(self, config: AIMv2Config):
         super().__init__(config)
 
-        self.num_tokens = 5
+        self.num_tokens = 10
         self.prompt_dropout = nn.Dropout(0.0)
 
         # initiate prompt:
         # val = math.sqrt(6. / float(3 * reduce(mul, self.patch_embed.patch_size, 1) + self.embed_dim))  # noqa
         val = math.sqrt(6. / float(3 * reduce(mul, (config.patch_size, config.patch_size), 1) + config.hidden_size))  # noqa
 
-        self.prompt_embeddings = nn.Parameter(torch.zeros(
-            1, self.num_tokens, config.hidden_size))
-        # xavier_uniform initialization
-        nn.init.uniform_(self.prompt_embeddings.data, -val, val)
+        # self.prompt_embeddings = nn.Parameter(torch.zeros(
+        #     1, self.num_tokens, config.hidden_size))
+        # # xavier_uniform initialization
+        # nn.init.uniform_(self.prompt_embeddings.data, -val, val)
 
-        self.deep_prompt_embeddings = nn.Parameter(torch.zeros(
-            len(self.blocks),
-            self.num_tokens, config.hidden_size
-        ))
+        self.deep_prompt_embeddings = nn.ParameterList(
+            nn.Parameter(torch.zeros(self.num_tokens, config.hidden_size)) for _ in range(len(self.blocks))
+        )
+        # self.deep_prompt_embeddings = nn.Parameter(torch.zeros(
+        #     len(self.blocks),
+        #     self.num_tokens, config.hidden_size
+        # ))
         # xavier_uniform initialization
-        nn.init.uniform_(
-            self.deep_prompt_embeddings.data, -val, val)
+        for p in self.deep_prompt_embeddings:
+            nn.init.uniform_(p.data, -val, val)
 
     def forward(
         self,
@@ -187,7 +190,7 @@ class AIMv2PromptTransformer(AIMv2Transformer):
         hidden_states = () if output_hidden_states else None
         for n, block in enumerate(self.blocks):
             B, N, C = tokens.shape
-            deep_prompt = self.deep_prompt_embeddings[n].unsqueeze(0).expand(B, -1, -1)
+            deep_prompt = self.prompt_dropout(self.deep_prompt_embeddings[n].unsqueeze(0).expand(B, -1, -1))
             tokens = torch.cat((deep_prompt, tokens), dim=1)
             if self.gradient_checkpointing and self.training:
                 tokens = self._gradient_checkpointing_func(block.__call__, tokens, mask)

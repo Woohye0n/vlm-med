@@ -111,11 +111,12 @@ class Ovis(OvisPreTrainedModel):
         rank0_print(END_LINE)
 
     def get_monitor_tensors(self):
-        monitor_tensors = dict(
-            wte=self.get_wte().weight,
-            lm_head=self.get_lm_head().weight,
-            vte=self.get_vte().weight
-        )
+        # monitor_tensors = dict(
+        #     wte=self.get_wte().weight,
+        #     lm_head=self.get_lm_head().weight,
+        #     vte=self.get_vte().weight
+        # )
+        monitor_tensors = dict()
         monitor_tensors.update(
             {f'visual_tokenizer_{k}': v for k, v in self.get_visual_tokenizer().get_monitor_tensors().items()})
         return monitor_tensors

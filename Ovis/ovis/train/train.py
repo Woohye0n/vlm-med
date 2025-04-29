@@ -2,8 +2,9 @@ import json
 import os
 import pathlib
 
-import deepspeed
+# import deepspeed
 import torch
+from torch import nn
 import transformers
 from deepspeed import get_accelerator
 from torch.utils.data import ConcatDataset
@@ -27,6 +28,16 @@ def train():
     parser = transformers.HfArgumentParser(
         (ModelArguments, TrainingArguments))
     model_args, training_args = parser.parse_args_into_dataclasses()
+
+    training_args.per_device_train_batch_size = 1
+    training_args.per_device_eval_batch_size = 1
+    training_args.bf16 = True
+    training_args.bf16_full_eval = True
+    training_args.num_train_epochs = 10
+    training_args.learning_rate = 1e-04
+    training_args.logging_steps = 2000
+    training_args.save_steps = 2000
+    training_args.gradient_accumulation_steps = 4
 
     # save args to checkpoint dir
     with training_args.main_process_first(local=False):
@@ -136,9 +147,15 @@ def train():
             model.get_vte().requires_grad_(True)
         elif module == 'vpt':
             model.get_visual_tokenizer().backbone.trunk.deep_prompt_embeddings.requires_grad_(True)
+            model.get_visual_tokenizer().backbone.trunk.prompt_dropout = nn.Dropout(0.1)
+            model.get_visual_tokenizer().backbone.trunk.prompt_dropout.train()
         else:
             raise ValueError(f'Invalid train module name: {module}')
 
+    model.to(torch.bfloat16)
+    model.get_llm().to(torch.bfloat16)
+    model.get_visual_tokenizer().to(torch.bfloat16)
+    model.get_vte().to(torch.bfloat16)
     rank0_print(BEGIN_LINE)
     rank0_print('Parameters to train:')
     for name, param in model.named_parameters():
