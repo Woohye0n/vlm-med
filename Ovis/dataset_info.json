@@ -3,5 +3,20 @@
         "meta_file": "/workspace/vlm-med/Ovis/bmad_vqa.json",
         "image_dir": "/workspace/vlm-med/Ovis/data",
         "data_format": "conversation"
+    },
+    "vqa_rad": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/VQA_RAD/vqa_rad_format.json",
+        "image_dir": "/workspace/vlm-med/Ovis/data/VQA_RAD/images",
+        "data_format": "conversation"
+    },
+    "path_vqa": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/PathVQA/pathvqa_format.json",
+        "image_dir": "/workspace/vlm-med/Ovis/data/PathVQA/images",
+        "data_format": "conversation"
+    },
+    "slake_vqa": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/Slake/slake_format.json",
+        "image_dir": "/workspace/vlm-med/Ovis/data/Slake/images",
+        "data_format": "conversation"
     }
 }

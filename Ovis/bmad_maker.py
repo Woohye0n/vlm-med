@@ -9,13 +9,19 @@ root_dir = '/workspace/vlm-med/Ovis/data/'  # 여기에 루트 폴더 경로를 
 data_list = []
 
 dataset_type = {
-    "BraTS2021_slice": "Brain MRI",
-    "camelyon16_256": "Pathology",
-    "Chest-RSNA": "Chest X-Ray",
-    "hist_DIY": "Liver CT",
-    "OCT2017": "Retinal OCT",
-    "RESC": "Retinal OCT"
+    "BraTS2021_slice": "MRI",
+    "Chest-RSNA": "X-Ray",
+    "hist_DIY": "CT",
+    "camelyon16_256": "Pathology"
 }
+# dataset_type = {
+#     "BraTS2021_slice": "Brain MRI",
+#     "camelyon16_256": "Pathology",
+#     "Chest-RSNA": "Chest X-Ray",
+#     "hist_DIY": "Liver CT",
+#     "OCT2017": "Retinal OCT",
+#     "RESC": "Retinal OCT"
+# }
 
 # 루트부터 모든 파일 순회
 for dirpath, dirnames, filenames in os.walk(root_dir):
@@ -32,6 +38,9 @@ for dirpath, dirnames, filenames in os.walk(root_dir):
 
             # id는 확장자 없는 파일명
             file_id = os.path.splitext(filename)[0]
+
+            if dirpath.split("/")[-3] not in dataset_type.keys():
+                continue
 
             t = dataset_type[dirpath.split("/")[-3]]
 
@@ -118,14 +127,14 @@ for dirpath, dirnames, filenames in os.walk(root_dir):
                 }
             ]
 
-            if random.random() < 0.5:
-                entry = {
-                    "id": file_id,
-                    "image": rel_path.replace("\\", "/"),  # Windows에서도 경로를 /로
-                    "conversations": conversation
-                }
+            # if random.random() < 0.5:
+            #     entry = {
+            #         "id": file_id,
+            #         "image": rel_path.replace("\\", "/"),  # Windows에서도 경로를 /로
+            #         "conversations": conversation
+            #     }
 
-                data_list.append(entry)
+            #     data_list.append(entry)
 
 # 결과를 json 파일로 저장
 output_path = 'bmad_vqa.json'

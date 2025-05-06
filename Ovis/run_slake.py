@@ -12,7 +12,7 @@ from ovis.serve.runner import RunnerArguments, OvisRunner
 
 def eval_model(args):
     # runner_args = RunnerArguments(model_path='AIDC-AI/Ovis2-8B')
-    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/temp/checkpoint-5000')
+    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/temp/checkpoint-10000')
     runner = OvisRunner(runner_args)
 
     with open(os.path.expanduser(args.question_file), 'r') as f:
@@ -20,8 +20,8 @@ def eval_model(args):
 
     right = 0
     wrong = 0
-    for item in json_data:
-    # for item in tqdm(json_data):
+    # for item in json_data:
+    for item in tqdm(json_data):
         if item["answer_type"] != "CLOSED":
             continue
         if item["q_lang"] != "en":
@@ -71,10 +71,10 @@ def eval_model(args):
 
         outputs = runner.run([image, qs])['output'].strip().strip(".")
 
-        print("Model:", outputs)
-        print("GT: ", gt)
+        # print("Model:", outputs)
+        # print("GT: ", gt)
 
-        if gt.lower() == outputs.lower():
+        if gt.lower() in outputs.lower() or outputs.lower() in gt.lower():
             right += 1
         else:
             wrong += 1

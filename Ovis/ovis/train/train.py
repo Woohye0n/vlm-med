@@ -33,7 +33,7 @@ def train():
     training_args.per_device_eval_batch_size = 1
     training_args.bf16 = True
     training_args.bf16_full_eval = True
-    training_args.num_train_epochs = 10
+    training_args.num_train_epochs = 5
     training_args.learning_rate = 1e-04
     training_args.logging_steps = 2000
     training_args.save_steps = 2000

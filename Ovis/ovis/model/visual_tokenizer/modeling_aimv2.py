@@ -158,7 +158,7 @@ class AIMv2PromptTransformer(AIMv2Transformer):
     def __init__(self, config: AIMv2Config):
         super().__init__(config)
 
-        self.num_tokens = 10
+        self.num_tokens = 50
         self.prompt_dropout = nn.Dropout(0.0)
 
         # initiate prompt:
