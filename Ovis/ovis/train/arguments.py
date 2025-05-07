@@ -23,7 +23,7 @@ class ModelArguments:
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
-    dataset_names: Optional[str] = field(default='bmad_vqa|vqa_rad|path_vqa|slake_vqa')  # a|b|c
+    dataset_names: Optional[str] = field(default='a|b|c')  # a|b|c
     dataset_info: Optional[str] = field(default='/workspace/vlm-med/Ovis/dataset_info.json')
     ovis_pretrained_path: Optional[str] = field(default='AIDC-AI/Ovis2-8B')
     visual_tokenizer_pretrained_path: Optional[str] = field(default=None)

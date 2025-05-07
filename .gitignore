@@ -185,3 +185,9 @@ log.txt
 llava_med_*.json
 bmad_vqa.json
 *.safetensors
+anomaly_shapenet_zero_shot2.json
+bmad_zero_shot.json
+webad_processed.json
+mvtec3d_zero_shot2.json
+mvtec_zero_shot.json
+real3d_zero_shot2.json

@@ -12,7 +12,7 @@ from ovis.serve.runner import RunnerArguments, OvisRunner
 
 def eval_model(args):
     # runner_args = RunnerArguments(model_path='AIDC-AI/Ovis2-8B')
-    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/temp/checkpoint-10000')
+    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/temp/checkpoint-22465')
     runner = OvisRunner(runner_args)
 
     with open(os.path.expanduser(args.question_file), 'r') as f:
