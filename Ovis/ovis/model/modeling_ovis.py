@@ -34,6 +34,16 @@ class VisualEmbedding(torch.nn.Embedding):
         init.normal_(self.weight, mean=mean, std=std)
         self._fill_padding_idx_with_zero()
 
+class AnomalyEmbedding(torch.nn.Embedding):
+    def forward(self, visual_tokens: Tensor) -> Tensor:
+        if visual_tokens.dtype in [torch.int8, torch.int16, torch.int32, torch.int64, torch.long]:
+            return super().forward(visual_tokens)
+        return torch.matmul(visual_tokens, self.weight)
+
+    def reset_parameters(self, mean=0., std=1.) -> None:
+        init.normal_(self.weight, mean=mean, std=std)
+        self._fill_padding_idx_with_zero()
+
 
 class OvisPreTrainedModel(PreTrainedModel):
     config_class = OvisConfig
@@ -66,8 +76,11 @@ class Ovis(OvisPreTrainedModel):
         if is_deepspeed_zero3_enabled():
             with deepspeed.zero.Init(config_dict_or_path=deepspeed_config()):
                 self.vte = VisualEmbedding(self.config.visual_tokenizer_config.vocab_size, self.config.hidden_size)
+                self.ate = AnomalyEmbedding(self.config.visual_tokenizer_config.vocab_size, self.config.hidden_size)
         else:
             self.vte = VisualEmbedding(self.config.visual_tokenizer_config.vocab_size, self.config.hidden_size,
+                                       device=self.visual_tokenizer.device, dtype=self.visual_tokenizer.dtype)
+            self.ate = AnomalyEmbedding(self.config.visual_tokenizer_config.vocab_size, self.config.hidden_size,
                                        device=self.visual_tokenizer.device, dtype=self.visual_tokenizer.dtype)
 
         def _merge_modules(modules_list: tuple):
@@ -130,6 +143,9 @@ class Ovis(OvisPreTrainedModel):
     def get_vte(self):
         return self.vte
 
+    def get_ate(self):
+        return self.ate
+
     def get_wte(self):
         return self.llm.get_input_embeddings()
 
@@ -179,21 +195,29 @@ class Ovis(OvisPreTrainedModel):
             # For text-only sample, one can simply use a full zero tensor as pixel_value, which will be ignored
             # (see below in this function); so, the gradient will not be affected.
             num_images = [x.shape[0] for x in pixel_values]
-            visual_tokens = self.visual_tokenizer(torch.cat([x for x in pixel_values], dim=0))
+            visual_tokens, anomaly_tokens = self.visual_tokenizer(torch.cat([x for x in pixel_values], dim=0))
             visual_embeds = torch.split(self.get_vte()(visual_tokens).to(dtype=self.dtype, device=input_device),
                                         split_size_or_sections=num_images, dim=0)
-            visual_input_ids = torch.split(torch.argmax(visual_tokens, dim=-1).to(device=input_device),
-                                           split_size_or_sections=num_images, dim=0)
+            anomaly_embeds = torch.split(self.get_ate()(anomaly_tokens).to(dtype=self.dtype, device=input_device),
+                                        split_size_or_sections=num_images, dim=0)
+            # visual_input_ids = torch.split(torch.argmax(visual_tokens, dim=-1).to(device=input_device),
+            #                                split_size_or_sections=num_images, dim=0)
+            visual_input_ids = torch.split(torch.argmax(torch.cat([visual_tokens, anomaly_tokens], dim=1), dim=-1).to(device=input_device),
+                                               split_size_or_sections=num_images, dim=0)
             visual_labels = [torch.full(x.shape, IGNORE_ID, dtype=torch.long, device=input_device) for x in
                              visual_input_ids]
         else:
             # When inference, sample can include only text with `None` pixel_value
             num_images = [x.shape[0] if x is not None else 0 for x in pixel_values]
             if sum(num_images) > 0:
-                visual_tokens = self.visual_tokenizer(torch.cat([x for x in pixel_values if x is not None], dim=0))
+                visual_tokens, anomaly_tokens = self.visual_tokenizer(torch.cat([x for x in pixel_values if x is not None], dim=0))
                 visual_embeds = torch.split(self.get_vte()(visual_tokens).to(dtype=self.dtype, device=input_device),
                                             split_size_or_sections=num_images, dim=0)
-                visual_input_ids = torch.split(torch.argmax(visual_tokens, dim=-1).to(device=input_device),
+                anomaly_embeds = torch.split(self.get_ate()(anomaly_tokens).to(dtype=self.dtype, device=input_device),
+                                        split_size_or_sections=num_images, dim=0)
+                # visual_input_ids = torch.split(torch.argmax(visual_tokens, dim=-1).to(device=input_device),
+                #                                split_size_or_sections=num_images, dim=0)
+                visual_input_ids = torch.split(torch.argmax(torch.cat([visual_tokens, anomaly_tokens], dim=1), dim=-1).to(device=input_device),
                                                split_size_or_sections=num_images, dim=0)
                 visual_labels = [torch.full(x.shape, IGNORE_ID, dtype=torch.long, device=input_device) for x in
                                  visual_input_ids]
@@ -209,8 +233,8 @@ class Ovis(OvisPreTrainedModel):
         input_embeds = []
         attention_masks = []
         labels = []
-        for text_input_id, text_label, text_attention_mask, visual_embed, visual_input_id, visual_label in zip(
-                text_input_ids, text_labels, text_attention_masks, visual_embeds, visual_input_ids, visual_labels
+        for text_input_id, text_label, text_attention_mask, visual_embed, anomaly_embed, visual_input_id, visual_label in zip(
+                text_input_ids, text_labels, text_attention_masks, visual_embeds, anomaly_embeds, visual_input_ids, visual_labels
         ):
             placeholder_token_mask = torch.lt(text_input_id, 0)
             text_embed = self.get_wte()(torch.masked_fill(text_input_id, placeholder_token_mask, 0))
@@ -230,6 +254,7 @@ class Ovis(OvisPreTrainedModel):
                     attention_mask_parts.append(
                         text_attention_mask[prev_image_atom_position + 1:image_atom_position])
                     input_embed_parts.append(visual_embed[index])
+                    input_embed_parts.append(anomaly_embed[index])
                     attention_mask_parts.append(
                         torch.ones_like(visual_label[index], dtype=torch.bool))
                     label_parts.append(visual_label[index])
@@ -251,7 +276,7 @@ class Ovis(OvisPreTrainedModel):
                 if self.training:
                     # Make visual_embed & visual_indicator_embeds involved in the backward graph,
                     # to be compatible with deepspeed zero and ddp.
-                    input_embed += torch.sum(visual_embed * 0.0) + torch.sum(visual_indicator_embeds * 0.0)
+                    input_embed += torch.sum(visual_embed * 0.0) + torch.sum(anomaly_embed * 0.0) + torch.sum(visual_indicator_embeds * 0.0)
             input_embeds.append(input_embed)
             attention_masks.append(attention_mask)
             labels.append(label)

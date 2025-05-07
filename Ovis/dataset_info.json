@@ -18,5 +18,35 @@
         "meta_file": "/workspace/vlm-med/Ovis/data/Slake/slake_format.json",
         "image_dir": "/workspace/vlm-med/Ovis/data/Slake/images",
         "data_format": "conversation"
+    },
+    "anomaly_shapenet_zero_shot2": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/anomaly_shapenet_zero_shot2.json",
+        "image_dir": "/workspace/anomaly_dataset/",
+        "data_format": "conversation"
+    },
+    "bmad_zero_shot": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/bmad_zero_shot.json",
+        "image_dir": "/workspace/anomaly_dataset/",
+        "data_format": "conversation"
+    },
+    "mvtec_zero_shot": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/mvtec_zero_shot.json",
+        "image_dir": "/workspace/anomaly_dataset/",
+        "data_format": "conversation"
+    },
+    "mvtec3d_zero_shot2": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/mvtec3d_zero_shot2.json",
+        "image_dir": "/workspace/anomaly_dataset/",
+        "data_format": "conversation"
+    },
+    "real3d_zero_shot2": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/real3d_zero_shot2.json",
+        "image_dir": "/workspace/anomaly_dataset/",
+        "data_format": "conversation"
+    },
+    "webad_processed": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/webad_processed.json",
+        "image_dir": "/workspace/anomaly_dataset/",
+        "data_format": "conversation"
     }
 }

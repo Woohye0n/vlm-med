@@ -64,6 +64,13 @@ class BaseVisualTokenizer(PreTrainedModel):
             ),
             torch.nn.LayerNorm(head_dim)
         )
+        self.anomaly_head = torch.nn.Sequential(
+            torch.nn.Linear(
+                self.backbone.config.hidden_size * self.config.hidden_stride * self.config.hidden_stride, head_dim,
+                bias=False
+            ),
+            torch.nn.LayerNorm(head_dim)
+        )
 
         assert all((self.image_processor.do_resize,
                     not getattr(self.image_processor, 'do_center_crop', False),
@@ -86,6 +93,9 @@ class BaseVisualTokenizer(PreTrainedModel):
 
     def get_head(self):
         return self.head
+
+    def get_anomaly_head(self):
+        return self.anomaly_head
 
     def get_image_size(self):
         raise NotImplementedError
@@ -254,6 +264,10 @@ class BaseVisualTokenizer(PreTrainedModel):
         features = self.encode(pixel_values)
         logits = self.head(features)
         tokens = self.tokenize(logits)
+
+        anomaly_logits = self.anomaly_head(features)
+        anomaly_tokens = self.tokenize(anomaly_logits)
+
         # tokens' shape is [BatchSize, #Token, VocabSize-5], so padding with [BatchSize, #Token, 5], after
         # which, tokens' shape should become [BatchSize, #Token, VocabSize]
         batch_size, token_len, _ = tokens.shape
@@ -263,4 +277,13 @@ class BaseVisualTokenizer(PreTrainedModel):
                                      layout=tokens.layout,
                                      requires_grad=False)
         tokens = torch.cat((tokens, padding_tensor), dim=2)
-        return tokens
+
+        batch_size, token_len, _ = anomaly_tokens.shape
+        padding_tensor = torch.zeros(size=(batch_size, token_len, len(IMAGE_INDICATOR_IDS)),
+                                     dtype=anomaly_tokens.dtype,
+                                     device=anomaly_tokens.device,
+                                     layout=anomaly_tokens.layout,
+                                     requires_grad=False)
+        anomaly_tokens = torch.cat((anomaly_tokens, padding_tensor), dim=2)
+
+        return tokens, anomaly_tokens

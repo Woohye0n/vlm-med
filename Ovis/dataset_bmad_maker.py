@@ -3,7 +3,7 @@ import json
 import random
 
 # 폴더의 루트 경로 설정
-root_dir = '/workspace/vlm-med/Ovis/data/'  # 여기에 루트 폴더 경로를 넣어
+root_dir = '/workspace/vlm-med/Ovis/data/'
 
 # 저장할 리스트
 data_list = []
