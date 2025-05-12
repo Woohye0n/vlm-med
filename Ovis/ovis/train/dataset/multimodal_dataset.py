@@ -7,7 +7,8 @@ from typing import Dict, Sequence, Union, List
 import numpy as np
 import torch
 import moviepy.editor as mp
-from PIL import Image
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
 

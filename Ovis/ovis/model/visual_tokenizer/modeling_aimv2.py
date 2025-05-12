@@ -196,7 +196,7 @@ class AIMv2PromptTransformer(AIMv2Transformer):
                 tokens = self._gradient_checkpointing_func(block.__call__, tokens, mask)
             else:
                 tokens = block(tokens, mask)
-            tokens = tokens[:, -N:, :]
+            tokens = tokens[:, -Nx:, :]
             if output_hidden_states:
                 hidden_states += (tokens,)
         tokens = self.post_trunk_norm(tokens)
@@ -216,8 +216,8 @@ class AIMv2Model(AIMv2PretrainedModel):
     def __init__(self, config: AIMv2Config):
         super().__init__(config)
         self.preprocessor = AIMv2ViTPreprocessor(config)
-        # self.trunk = AIMv2Transformer(config)
-        self.trunk = AIMv2PromptTransformer(config)
+        self.trunk = AIMv2Transformer(config)
+        # self.trunk = AIMv2PromptTransformer(config)
 
     def forward(
         self,

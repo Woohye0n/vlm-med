@@ -238,6 +238,20 @@ class Ovis(OvisPreTrainedModel):
         ):
             placeholder_token_mask = torch.lt(text_input_id, 0)
             text_embed = self.get_wte()(torch.masked_fill(text_input_id, placeholder_token_mask, 0))
+
+            # self.abnormal_embed = text_input_id
+            # ### to save text embedding feature (e.g. "Abnormal")     
+            # last = text_embed[0]
+            # cnt = 0
+            # for idx, t in enumerate(text_embed[1:]):
+            #     if idx == 22:
+            #         self.abnormal_embed_ = t
+            #         # print(idx)
+            #     if idx == 23:
+            #         self.abnormal_embed_1 = t
+            #         # print(idx)
+            # ###
+
             for i, indicator_id in enumerate(IMAGE_INDICATOR_IDS):
                 text_embed[text_input_id == indicator_id] = visual_indicator_embeds[i]
             image_atom_positions = torch.where(torch.eq(text_input_id, IMAGE_ATOM_ID))[0].tolist()
@@ -254,6 +268,17 @@ class Ovis(OvisPreTrainedModel):
                     attention_mask_parts.append(
                         text_attention_mask[prev_image_atom_position + 1:image_atom_position])
                     input_embed_parts.append(visual_embed[index])
+                    ### to save visual embedding
+                    if index == 0:
+                        # self.temp_feature = visual_embed[index]
+                        self.temp_feature = anomaly_embed[index]
+                        # compute cosine similarity with text_embed
+                        self.max_sim_index = []
+                        for v in visual_embed[index]:
+                            similarity = torch.matmul(self.get_wte().weight, v.T)  # shape: [text_len, visual_dim] x [visual_dim,] = [text_len]
+                            max_sim_index = similarity.argmax().item()
+                            self.max_sim_index.append(max_sim_index)  # or store it wherever appropriate
+                    ###
                     input_embed_parts.append(anomaly_embed[index])
                     attention_mask_parts.append(
                         torch.ones_like(visual_label[index], dtype=torch.bool))
