@@ -15,7 +15,7 @@ from ovis.serve.runner import RunnerArguments, OvisRunner
 
 def eval_model(args):
     # runner_args = RunnerArguments(model_path='AIDC-AI/Ovis2-8B')
-    runner_args = RunnerArguments(model_path='/workspace/vlm-med2/Ovis/temp/')
+    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/model_0513')
     runner = OvisRunner(runner_args)
 
     for numbering in [1, 2, 3, 4]:
@@ -55,16 +55,54 @@ def eval_model(args):
         # L2
         # dists = torch.norm(runner.model.temp_feature - runner.model.abnormal_embed, dim=1)
 
+        grid = runner.model.visual_tokenizer.grid_
+        feature = runner.model.temp_feature
+        thumbnail = feature[0]
+
+        if grid != (1, 1):
+            # Reshape and stitch feature[1:] into tot_feature according to grid
+            n, m = grid
+            patch_h, patch_w = 16, 16
+            patches = feature[1:].reshape(n, m, patch_h, patch_w, -1)
+
+            # If feature[1:] is (n*m, w, h), reshape and then stack into a grid image
+            rows = []
+            for i in range(n):
+                row = torch.cat([patches[i, j] for j in range(m)], dim=-2)  # concat horizontally
+                rows.append(row)
+            tot_feature = torch.cat(rows, dim=-3)  # concat vertically
+
+            # print("tot_feature shape:", tot_feature.shape)
+            N = tot_feature.shape[0]
+
         # cossim
         x1_norm = torch.nn.functional.normalize(runner.model.get_wte()(torch.tensor(34563).to(device=runner.device)), dim=0).unsqueeze(0)         # (3584,)
         x2_norm = torch.nn.functional.normalize(runner.model.get_wte()(torch.tensor(4622).to(device=runner.device)), dim=0).unsqueeze(0)         # (3584,)
-        Y_norm = torch.nn.functional.normalize(runner.model.temp_feature, dim=1)         # (256, 3584)
+        Y_norm = torch.nn.functional.normalize(thumbnail, dim=1)         # (256, 3584)
         dist1 = torch.nn.functional.cosine_similarity(x1_norm, Y_norm, dim=1).squeeze()
+        print("max:", max(dist1), ", min:", min(dist1))
+        # for i in Y_norm:
+        #     print(i)
+        # exit()
         dist2 = torch.nn.functional.cosine_similarity(x2_norm, Y_norm, dim=1).squeeze()
+        dist1 = dist1.reshape(16, 16)
+        dist2 = dist2.reshape(16, 16)
+        heatmap_tensor = dist1
+        # if grid != (1, 1):
+        #     tot_norm = torch.nn.functional.normalize(tot_feature, dim=-1).flatten(0, 1)  # (n*m, d)
+        #     dist1_tot = torch.nn.functional.cosine_similarity(x1_norm, tot_norm, dim=1).squeeze()
+        #     dist1_tot = dist1_tot.reshape(N, N)
+        #     dist1 = torch.nn.functional.interpolate(
+        #         dist1.unsqueeze(0).unsqueeze(0), size=(N, N), mode='nearest'
+        #     ).squeeze()
+        #     print(dist1.dtype)
+        #     print(dist1_tot.dtype)
+        #     heatmap_tensor = dist1 + dist1_tot
 
         # heatmap_tensor = (dist1.reshape(16, 16) - dist2.reshape(16, 16))
         # print(heatmap_tensor.min(), heatmap_tensor.max())
-        heatmap_tensor = dist1.reshape(16, 16)
+        # Replace the following line if you want to use the new reshaped dist1_tot
+        # heatmap_tensor = dist1_tot_reshaped
         # print(heatmap_tensor.min(), heatmap_tensor.max())
         # heatmap_tensor = (dists1.reshape(16, 16) - dists2.reshape(16, 16) + 2) / 4
 

@@ -66,11 +66,18 @@ class BaseVisualTokenizer(PreTrainedModel):
         )
         self.anomaly_head = torch.nn.Sequential(
             torch.nn.Linear(
-                self.backbone.config.hidden_size * self.config.hidden_stride * self.config.hidden_stride, head_dim,
+                self.backbone.config.hidden_size * self.config.hidden_stride * self.config.hidden_stride, head_dim, # head_dim: 65536 - 5
                 bias=False
             ),
-            torch.nn.LayerNorm(head_dim)
+            torch.nn.LayerNorm(head_dim) # head_dim: 65536 - 5
         )
+        # self.anomaly_head = torch.nn.Sequential(
+        #     torch.nn.Linear(
+        #         self.backbone.config.hidden_size * self.config.hidden_stride * self.config.hidden_stride, head_dim,
+        #         bias=False
+        #     ),
+        #     torch.nn.LayerNorm(head_dim)
+        # )
 
         assert all((self.image_processor.do_resize,
                     not getattr(self.image_processor, 'do_center_crop', False),
@@ -202,6 +209,7 @@ class BaseVisualTokenizer(PreTrainedModel):
             raise ValueError('get_image_size() returns non-square size')
         side = sides[0]
         grid = _get_best_grid(image, side)
+        self.grid_ = grid
         partition = _partition(image, grid)
         crops = [image.crop(p) for p in partition]
         if len(crops) > 1:

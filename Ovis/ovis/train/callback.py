@@ -23,6 +23,7 @@ class MonitorCallback(TrainerCallback):
                     rank0_print(BEGIN_LINE)
                     rank0_print(f'{k} @ step {step} with sum: {v.sum().item()} and content: ')
                     rank0_print(v)
+                    rank0_print(v.shape)
                     rank0_print(END_LINE)
 
     def on_step_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):

@@ -35,14 +35,55 @@ class VisualEmbedding(torch.nn.Embedding):
         self._fill_padding_idx_with_zero()
 
 class AnomalyEmbedding(torch.nn.Embedding):
+    # def __init__(self, vocab_size, hidden_size, *inputs, **kwargs):
+    #     super().__init__(vocab_size - 32, hidden_size, *inputs, **kwargs)
+    #     self.words_weight = torch.zeros(32, hidden_size, device=kwargs["device"])
+    #     self.cat_weight = torch.cat([self.words_weight, self.weight], dim=0)
+
     def forward(self, visual_tokens: Tensor) -> Tensor:
         if visual_tokens.dtype in [torch.int8, torch.int16, torch.int32, torch.int64, torch.long]:
             return super().forward(visual_tokens)
         return torch.matmul(visual_tokens, self.weight)
 
     def reset_parameters(self, mean=0., std=1.) -> None:
-        init.normal_(self.weight, mean=mean, std=std)
+        init.normal_(self.weight, mean=0., std=1.)
         self._fill_padding_idx_with_zero()
+
+    # def set_parameters(self, tokenizer, wte) -> None:
+    #     # 32 words
+    #     medical_keywords = [
+    #         "Anomaly", "Abnormal", "Lesion", "Pathology", "Disorder", "Defect", "Malformation",
+    #         "Degeneration", "Infiltration", "Mass", "Nodule", "Opacity", "Thickening", "Enlargement",
+    #         "Edema", "Calcification", "Disease", "Cancer", "Tumor", "Carcinoma", "Neoplasm", "Metastasis",
+    #         "Infection", "Inflammation", "Pneumonia", "Tuberculosis", "Fibrosis", "Fracture", "Atelectasis",
+    #         "Effusion", "Stenosis", "Hemorrhage"
+    #     ]
+
+    #     for idx, w in enumerate(medical_keywords):
+    #         print(w)
+    #         print(tokenizer(w)["input_ids"])
+    #         temp = tokenizer(w)["input_ids"]
+
+    #         # print(tokenizer.decode(temp["input_ids"], skip_special_tokens=False).strip())
+    #         print(tokenizer.decode([62948], skip_special_tokens=False))
+    #         t1 = 0
+    #         for t in temp:
+    #             t1 += wte[t]
+    #             print(t)
+    #             print(t1)
+    #         t1 /= len(temp)
+    #         t2 = wte[62948]
+    #         print(t2)
+
+    #         print(t1.shape)
+    #         print(t2.shape)
+    #         cos_sim = torch.nn.functional.cosine_similarity(t1, t2, dim=0)
+    #         print(cos_sim)  # -> 1.0
+
+    #         self.words_weight[idx] = t
+    #         exit()
+
+    #     self.cat_weight = torch.cat([self.words_weight, self.weight], dim=0)
 
 
 class OvisPreTrainedModel(PreTrainedModel):
@@ -81,7 +122,7 @@ class Ovis(OvisPreTrainedModel):
             self.vte = VisualEmbedding(self.config.visual_tokenizer_config.vocab_size, self.config.hidden_size,
                                        device=self.visual_tokenizer.device, dtype=self.visual_tokenizer.dtype)
             self.ate = AnomalyEmbedding(self.config.visual_tokenizer_config.vocab_size, self.config.hidden_size,
-                                       device=self.visual_tokenizer.device, dtype=self.visual_tokenizer.dtype)
+                                        device=self.visual_tokenizer.device, dtype=self.visual_tokenizer.dtype)
 
         def _merge_modules(modules_list: tuple):
             merged_modules = []
@@ -129,9 +170,15 @@ class Ovis(OvisPreTrainedModel):
         #     lm_head=self.get_lm_head().weight,
         #     vte=self.get_vte().weight
         # )
-        monitor_tensors = dict()
-        monitor_tensors.update(
-            {f'visual_tokenizer_{k}': v for k, v in self.get_visual_tokenizer().get_monitor_tensors().items()})
+
+        # monitor_tensors = dict()
+        # monitor_tensors.update(
+        #     {f'visual_tokenizer_{k}': v for k, v in self.get_visual_tokenizer().get_monitor_tensors().items()})
+
+        monitor_tensors = dict(
+            # vte=self.get_vte().weight,
+            ate=self.get_ate().weight
+        )
         return monitor_tensors
 
     def get_lm_head(self):
@@ -238,7 +285,6 @@ class Ovis(OvisPreTrainedModel):
         ):
             placeholder_token_mask = torch.lt(text_input_id, 0)
             text_embed = self.get_wte()(torch.masked_fill(text_input_id, placeholder_token_mask, 0))
-
             # self.abnormal_embed = text_input_id
             # ### to save text embedding feature (e.g. "Abnormal")     
             # last = text_embed[0]
@@ -268,17 +314,17 @@ class Ovis(OvisPreTrainedModel):
                     attention_mask_parts.append(
                         text_attention_mask[prev_image_atom_position + 1:image_atom_position])
                     input_embed_parts.append(visual_embed[index])
-                    ### to save visual embedding
-                    if index == 0:
-                        # self.temp_feature = visual_embed[index]
-                        self.temp_feature = anomaly_embed[index]
-                        # compute cosine similarity with text_embed
-                        self.max_sim_index = []
-                        for v in visual_embed[index]:
-                            similarity = torch.matmul(self.get_wte().weight, v.T)  # shape: [text_len, visual_dim] x [visual_dim,] = [text_len]
-                            max_sim_index = similarity.argmax().item()
-                            self.max_sim_index.append(max_sim_index)  # or store it wherever appropriate
-                    ###
+                    # ### to save visual embedding
+                    # if index == 0:
+                    #     # self.temp_feature = visual_embed[index]
+                    #     self.temp_feature = visual_embed
+                    #     # # compute cosine similarity with text_embed
+                    #     # self.max_sim_index = []
+                    #     # for v in visual_embed[index]:
+                    #     #     similarity = torch.matmul(self.get_wte().weight, v.T)  # shape: [text_len, visual_dim] x [visual_dim,] = [text_len]
+                    #     #     max_sim_index = similarity.argmax().item()
+                    #     #     self.max_sim_index.append(max_sim_index)  # or store it wherever appropriate
+                    # ###
                     input_embed_parts.append(anomaly_embed[index])
                     attention_mask_parts.append(
                         torch.ones_like(visual_label[index], dtype=torch.bool))

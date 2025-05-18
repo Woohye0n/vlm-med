@@ -35,10 +35,11 @@ def train():
     training_args.bf16_full_eval = True
     training_args.num_train_epochs = 3
     training_args.learning_rate = 1e-04
-    training_args.logging_steps = 6000
-    training_args.save_steps = 6000
-    training_args.gradient_accumulation_steps = 4
+    training_args.logging_steps = 100
+    training_args.save_strategy = "epoch"
+    training_args.gradient_accumulation_steps = 3
     training_args.dataset_names = "bmad_vqa|vqa_rad|path_vqa|slake_vqa|anomaly_shapenet_zero_shot2|bmad_zero_shot|mvtec_zero_shot|mvtec3d_zero_shot2|real3d_zero_shot2|webad_processed"
+    # training_args.dataset_names = "bmad_vqa"
 
     # save args to checkpoint dir
     with training_args.main_process_first(local=False):
@@ -147,9 +148,9 @@ def train():
         elif module == 'vte':
             model.get_vte().requires_grad_(True)
         elif module == 'vpt':
-            model.get_visual_tokenizer().backbone.trunk.deep_prompt_embeddings.requires_grad_(True)
-            model.get_visual_tokenizer().backbone.trunk.prompt_dropout = nn.Dropout(0.1)
-            model.get_visual_tokenizer().backbone.trunk.prompt_dropout.train()
+            # model.get_visual_tokenizer().backbone.trunk.deep_prompt_embeddings.requires_grad_(True)
+            # model.get_visual_tokenizer().backbone.trunk.prompt_dropout = nn.Dropout(0.1)
+            # model.get_visual_tokenizer().backbone.trunk.prompt_dropout.train()
             model.get_visual_tokenizer().get_anomaly_head().requires_grad_(True)
             model.get_ate().requires_grad_(True)
         else:
