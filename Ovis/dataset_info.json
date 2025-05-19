@@ -48,5 +48,10 @@
         "meta_file": "/workspace/vlm-med/Ovis/data/webad_processed.json",
         "image_dir": "/workspace/anomaly_dataset/",
         "data_format": "conversation"
+    },
+    "mimic_diff_vqa": {
+        "meta_file": "/workspace/vlm-med/Ovis/data/mimic_diff_vqa_train.json",
+        "image_dir": "/workspace/",
+        "data_format": "conversation"
     }
 }

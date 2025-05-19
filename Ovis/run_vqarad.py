@@ -12,7 +12,7 @@ from datasets import load_dataset
 from ovis.serve.runner import RunnerArguments, OvisRunner
 
 def eval_model(args):
-    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/temp/checkpoint-10000')
+    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/model_0518/')
     # runner_args = RunnerArguments(model_path='AIDC-AI/Ovis2-8B')
     runner = OvisRunner(runner_args)
 
@@ -25,6 +25,8 @@ def eval_model(args):
         qs = item["question"].strip()
         gt = item["answer"].strip()
 
+        if len(gt.split(' ')) != 1:
+            continue
         # if gt.lower() not in ['yes', 'no']:
         #     continue
 
@@ -38,6 +40,8 @@ def eval_model(args):
         # print("GT: ", gt)
 
         if gt.lower() in outputs.lower() or outputs.lower() in gt.lower():
+        # if gt.lower() in outputs.lower():
+        # if outputs.lower() in gt.lower():
             right += 1
         else:
             wrong += 1

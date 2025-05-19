@@ -12,7 +12,7 @@ from ovis.serve.runner import RunnerArguments, OvisRunner
 
 def eval_model(args):
     # runner_args = RunnerArguments(model_path='AIDC-AI/Ovis2-8B')
-    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/model_0517')
+    runner_args = RunnerArguments(model_path='/workspace/vlm-med/Ovis/model_0518')
     runner = OvisRunner(runner_args)
 
     with open(os.path.expanduser(args.question_file), 'r') as f:
@@ -71,8 +71,8 @@ def eval_model(args):
 
         outputs = runner.run([image, qs])['output'].strip().strip(".")
 
-        print("Model:", outputs)
-        print("GT: ", gt)
+        # print("Model:", outputs)
+        # print("GT: ", gt)
 
         if gt.lower() in outputs.lower() or outputs.lower() in gt.lower():
             right += 1

@@ -40,6 +40,7 @@ def train():
     training_args.gradient_accumulation_steps = 3
     training_args.dataset_names = "bmad_vqa|vqa_rad|path_vqa|slake_vqa|anomaly_shapenet_zero_shot2|bmad_zero_shot|mvtec_zero_shot|mvtec3d_zero_shot2|real3d_zero_shot2|webad_processed"
     # training_args.dataset_names = "bmad_vqa"
+    # training_args.dataset_names = "mimic_diff_vqa"
 
     # save args to checkpoint dir
     with training_args.main_process_first(local=False):
