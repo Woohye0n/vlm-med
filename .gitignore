@@ -192,3 +192,4 @@ mvtec3d_zero_shot2.json
 mvtec_zero_shot.json
 real3d_zero_shot2.json
 mimic_diff_vqa.json
+mimic_diff_vqa_train.json
